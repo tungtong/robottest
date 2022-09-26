@@ -25,23 +25,27 @@ Get XML from site
    #     END
    # END
     FOR    ${item}    IN RANGE    1    ${count}
-    ${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/title
-        Run Keyword If    "${feedprice}" in "${products}"
-        ...     Run Keyword And Continue On Failure    Should Be Equal    1    5
-        Log Many    ${feedprice}   ${products}
+    ${feedtitle}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/title
+    ${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/price
+    ${itemurl}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/link
+    ${price}=    Replace String    ${feedprice}    EUR    ${EMPTY}
+    ${price}=    Replace String    ${price}    .    ,
+    Log    ${price.strip()}
+    Log    ${itemurl}
+    Run Keyword And Continue On Failure    Open Browser    ${itemurl}    headlesschrome
+    Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
+    ${web_price}=    Get Text    (//span[@class='the-price'])[2]
+    Should Be Equal    ${price.strip()}    ${web_price}
+    Run Keyword And Continue On Failure    Close Browser
+    #IF    "${feedtitle}" in "${products}"
+    #    Run Keyword And Continue On Failure    Open Browser    ${itemurl}    headlesschrome
+    #    Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
+    #    ${web_price}=    Get Text    (//span[@class='the-price'])[2]
+    #    Should Be Equal    ${price.strip()}    ${web_price}
+    #    Run Keyword And Continue On Failure    Close Browser
+    #END    
     END
-   # FOR    ${i}    IN RANGE    1    5
-   # ${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${i}]/title
-   # FOR    ${product}    IN    @{products}
-   # TRY
-   #     WHILE    '${feedprice}' == '${product}'
-   #          Log    'test'
-   #     END    
-   # EXCEPT
-   #     Log    Fail
-   # END
-   #     
-   # END
+   
     
 
     #product
@@ -58,12 +62,3 @@ Get XML from site
     #Should Be Equal    $#{price.strip()}    ${web_price}
     #Close Browser
     #END
-    
-    #s${child_elements}=    Get Child Elements    ${xml_obj}    .//channel/item
-    #s${i}=    Create List
-    #sFOR    ${item}    IN    @{item}
-    #s     Append To List    ${i}    ${item}
-    #sLog Many    ${i}`
-    #s#Should Not Be Empty    ${child_elements}
-    #s#${title}=    Get Element Text    ${child_elements[i]}
-    #sEND
