@@ -5,6 +5,7 @@ Library    RequestsLibrary
 Library    collections
 Library    os
 Library    String
+Library    RPA.Excel.Files
 
 *** Variables ***
 ${baseurl}    https://livekaarten.nl
@@ -12,22 +13,19 @@ ${baseurl}    https://livekaarten.nl
 
 *** Test Cases ***
 Get XML from site
+    #Get Shopping feed
     Create Session    mysession    ${baseurl}
     ${response}=    GET On Session    mysession    /shoppingfeed/custom/google
     ${xmlstring}=    Convert To String    ${response.content}
     ${xml_obj}=    Parse Xml    ${xmlstring}
     ${count}=    XML.Get Element Count    ${xml_obj}    .//channel/item
-   # FOR    ${sample}    IN    @{products}
-   #     FOR    ${item}    IN RANGE    1    ${count}
-   #         ${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/title
-   #         Run Keyword If    "${sample}" == "${feedprice}"
-   #         ...    Should Be Equal    1    5
-   #     END
-   # END
+    #Check price from feed and shop
+    Create Workbook
     FOR    ${item}    IN RANGE    1    ${count}
     ${feedtitle}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/title
     ${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/price
     ${itemurl}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/link
+    ${itemid}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${item}]/id
     ${price}=    Replace String    ${feedprice}    EUR    ${EMPTY}
     ${price}=    Replace String    ${price}    .    ,
     Log    ${price.strip()}
@@ -35,30 +33,18 @@ Get XML from site
     Run Keyword And Continue On Failure    Open Browser    ${itemurl}    headlesschrome
     Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
     ${web_price}=    Get Text    (//span[@class='the-price'])[2]
-    Should Be Equal    ${price.strip()}    ${web_price}
-    Run Keyword And Continue On Failure    Close Browser
-    #IF    "${feedtitle}" in "${products}"
-    #    Run Keyword And Continue On Failure    Open Browser    ${itemurl}    headlesschrome
-    #    Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
-    #    ${web_price}=    Get Text    (//span[@class='the-price'])[2]
-    #    Should Be Equal    ${price.strip()}    ${web_price}
-    #    Run Keyword And Continue On Failure    Close Browser
-    #END    
+    Run Keyword And Continue On Failure    Should Be Equal    ${price.strip()}    ${web_price}
+        IF    "${feedtitle}" in "${products}"
+            Run Keyword And Continue On Failure    Open Browser    ${itemurl}    headlesschrome
+            Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
+            ${web_price}=    Get Text    (//span[@class='the-price'])[2]
+                IF    ${price.strip()} != ${web_price}
+                Set Cell Value    ${item}    1    ${itemid}
+                Set Cell Value    ${item}    2    ${products}
+                Set Cell Value    ${item}    3    ${price.strip()}
+                Set Cell Value    ${item}    4    ${web_price}
+                Save Workbook    diffprice.xlsx
+                END
+            Run Keyword And Continue On Failure    Close Browser
+        END    
     END
-   
-    
-
-    #product
-    #FOR    ${i}    IN RANGE    1    5
-    #${feedprice}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${i}]/price
-    #${itemurl}=    XML.Get Element Text    ${xml_obj}    .//channel/item[${i}]/link
-    #${price}=    Replace String    ${feedprice}    EUR    ${EMPTY}
-    #${price}=    Replace String    ${price}    .    ,
-    ## Log    ${price.strip()}
-    ## Log    ${itemurl}
-    #Open Browser    ${itemurl}    headlesschrome 
-    #Wait Until Element Is Visible    (//span[@class='the-price'])[2]
-    #${web_price}=    Get Text    (//span[@class='the-price'])[2]
-    #Should Be Equal    $#{price.strip()}    ${web_price}
-    #Close Browser
-    #END
