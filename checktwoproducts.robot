@@ -33,6 +33,7 @@ Get XML from site
                 Run Keyword And Continue On Failure    Wait Until Element Is Visible    (//span[@class='the-price'])[2]
                 ${web_price}=    Get Text    (//span[@class='the-price'])[2]
             IF    "${price.strip()}" != "${web_price}"
+                Log To Console    "Prices are difference!!"
                 Set Cell Value    ${item}    1    ${itemid}
                 Set Cell Value    ${item}    2    ${feedtitle}
                 Set Cell Value    ${item}    3    ${price.strip()}
