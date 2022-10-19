@@ -36,7 +36,7 @@ Get XML from site
             IF    "${price.strip()}" != "${web_price}"
                 ${date}=      Get Current Date      UTC      exclude_millis=yes
                 ${datetime} =     Convert Date    ${date}    datetime
-                ${currenttime}=    Set Variable    ${datetime.year}${datetime.month}${datetime.day}.${datetime.hour}:${datetime.minute}:${datetime.second}
+                ${currenttime}=    Set Variable    ${datetime.year}${datetime.month}${datetime.day}${datetime.hour}${datetime.minute}${datetime.second}
                 Log To Console    "Prices are difference!!"
                 Set Cell Value    ${item}    1    ${itemid}
                 Set Cell Value    ${item}    2    ${feedtitle}
